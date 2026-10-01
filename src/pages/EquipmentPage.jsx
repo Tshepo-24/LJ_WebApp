@@ -1,3 +1,4 @@
+import { API_BASE } from '../api'
 import { useState, useEffect } from "react"
 import EquipmentCard from "../components/EquipmentCard"
 
@@ -7,7 +8,7 @@ function EquipmentPage() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    fetch("http://localhost:8080/api/equipment")
+    fetch(`${API_BASE}/api/equipment`)
       .then((response) => response.json())
       .then((data) => {
         setEquipmentList(data)

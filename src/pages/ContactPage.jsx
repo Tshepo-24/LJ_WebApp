@@ -1,3 +1,4 @@
+import { API_BASE } from '../api'
 import { useState  , useEffect , useRef } from "react";
 
 function ContactPage() {
@@ -17,7 +18,7 @@ function ContactPage() {
 const submittingRef = useRef(false);
 
 useEffect(() => {
-  fetch("http://localhost:8080/api/equipment")
+  fetch(`${API_BASE}/api/equipment`)
     .then((response) => response.json())
     .then((data) => setEquipmentList(data))
     .catch((err) => console.error("Could not load equipment list", err));
@@ -47,7 +48,7 @@ function handleSubmit(e) {
     endDate: formData.endDate,
   };
 
-  fetch("http://localhost:8080/api/bookings", {
+  fetch(`${API_BASE}/api/bookings`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

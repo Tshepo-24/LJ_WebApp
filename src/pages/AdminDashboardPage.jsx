@@ -6,7 +6,7 @@ ModuleRegistry.registerModules([AllCommunityModule])
 
 // '' uses the Vite proxy (needed for testing on your phone).
 // If you have not set up the proxy yet, use 'http://localhost:8080' instead.
-const API_BASE = 'http://localhost:8080'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
 const STATUSES = ['NEW', 'CONFIRMED', 'IN_USE', 'RETURNED', 'CANCELLED']
 const FILTER_TABS = ['ALL', ...STATUSES]

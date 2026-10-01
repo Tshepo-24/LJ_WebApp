@@ -1,3 +1,4 @@
+import { API_BASE } from '../api'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -12,7 +13,7 @@ function AdminLoginPage() {
     e.preventDefault()
     setError('')
 
-    fetch('http://localhost:8080/api/auth/login', {
+    fetch(`${API_BASE}/api/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
