@@ -44,8 +44,6 @@ private final SecretKey key;
             Jwts.parser().verifyWith(key).build().parseSignedClaims(token);
             return true;
         } catch (Exception e) {
-            System.out.println("TOKEN VALIDATION FAILED: " + e.getMessage());
-            e.printStackTrace();
             return false;
         }
     }

@@ -46,7 +46,7 @@ public org.springframework.security.crypto.password.PasswordEncoder passwordEnco
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
+        configuration.setAllowedOrigins(List.of(System.getenv().getOrDefault("CORS_ORIGINS", "http://localhost:5173").split(",")));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
 
