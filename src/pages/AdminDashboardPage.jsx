@@ -4,84 +4,122 @@ import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community'
 
 ModuleRegistry.registerModules([AllCommunityModule])
 
+// '' uses the Vite proxy (needed for testing on your phone).
+// If you have not set up the proxy yet, use 'http://localhost:8080' instead.
+const API_BASE = 'http://localhost:8080'
+
+const STATUSES = ['NEW', 'CONFIRMED', 'IN_USE', 'RETURNED', 'CANCELLED']
+const FILTER_TABS = ['ALL', ...STATUSES]
+
+const STATUS_STYLES = {
+  NEW: 'bg-amber-100 text-amber-800',
+  CONFIRMED: 'bg-green-100 text-green-800',
+  IN_USE: 'bg-blue-100 text-blue-800',
+  RETURNED: 'bg-slate-200 text-slate-700',
+  CANCELLED: 'bg-red-100 text-red-700',
+}
+
+function StatusBadge({ status }) {
+  return (
+    <span
+      className={`inline-block shrink-0 px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wide ${
+        STATUS_STYLES[status] || 'bg-slate-100 text-slate-700'
+      }`}
+    >
+      {status?.replace('_', ' ')}
+    </span>
+  )
+}
+
 function AdminDashboardPage() {
   const [bookings, setBookings] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [activeFilter, setActiveFilter] = useState('ALL')
   const [selectedBooking, setSelectedBooking] = useState(null)
-  const [quickFilterText, setQuickFilterText] = useState('')
+  const [searchText, setSearchText] = useState('')
+  const [cardCount, setCardCount] = useState(10) // how many cards show on phones
+  const [busy, setBusy] = useState(false) // blocks double clicks in the modal
 
   useEffect(() => {
     const token = localStorage.getItem('adminToken')
 
-    fetch('http://localhost:8080/api/admin/bookings', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+    fetch(`${API_BASE}/api/admin/bookings`, {
+      headers: { Authorization: `Bearer ${token}` },
     })
       .then((response) => {
-        if (!response.ok) {
-          throw new Error('Failed to load bookings')
-        }
+        if (!response.ok) throw new Error('Failed to load bookings')
         return response.json()
       })
       .then((data) => {
         setBookings(data)
         setLoading(false)
       })
-      .catch((err) => {
+      .catch(() => {
         setError('Could not load bookings.')
         setLoading(false)
       })
   }, [])
 
   function updateStatus(newStatus) {
-  const token = localStorage.getItem('adminToken')
+    if (busy) return
+    setBusy(true)
+    const token = localStorage.getItem('adminToken')
 
-  fetch(`http://localhost:8080/api/admin/bookings/${selectedBooking.id}/status`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ status: newStatus }),
-  })
-    .then((response) => {
-      if (!response.ok) throw new Error('Update failed')
-      return response.json()
+    fetch(`${API_BASE}/api/admin/bookings/${selectedBooking.id}/status`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ status: newStatus }),
     })
-    .then((updated) => {
-      setBookings((prev) => prev.map((b) => (b.id === updated.id ? updated : b)))
-      setSelectedBooking(updated)
+      .then((response) => {
+        if (!response.ok) throw new Error('Update failed')
+        return response.json()
+      })
+      .then((updated) => {
+        setBookings((prev) => prev.map((b) => (b.id === updated.id ? updated : b)))
+        setSelectedBooking(updated)
+      })
+      .catch(() => alert('Could not update the status. Please try again.'))
+      .finally(() => setBusy(false))
+  }
+
+  function deleteBooking() {
+    if (busy) return
+    const confirmed = window.confirm(
+      `Permanently delete booking ${selectedBooking.referenceToken}? This cannot be undone.`
+    )
+    if (!confirmed) return
+
+    setBusy(true)
+    const token = localStorage.getItem('adminToken')
+
+    fetch(`${API_BASE}/api/admin/bookings/${selectedBooking.id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
     })
-    .catch(() => alert('Could not update the status. Please try again.'))
-}
+      .then((response) => {
+        if (!response.ok) throw new Error('Delete failed')
+        setBookings((prev) => prev.filter((b) => b.id !== selectedBooking.id))
+        setSelectedBooking(null)
+      })
+      .catch(() => alert('Could not delete the booking. Please try again.'))
+      .finally(() => setBusy(false))
+  }
 
-function deleteBooking() {
-  const confirmed = window.confirm(
-    `Permanently delete booking ${selectedBooking.referenceToken}? This cannot be undone.`
-  )
-  if (!confirmed) return
-
-  const token = localStorage.getItem('adminToken')
-
-  fetch(`http://localhost:8080/api/admin/bookings/${selectedBooking.id}`, {
-    method: 'DELETE',
-    headers: { Authorization: `Bearer ${token}` },
-  })
-    .then((response) => {
-      if (!response.ok) throw new Error('Delete failed')
-      setBookings((prev) => prev.filter((b) => b.id !== selectedBooking.id))
-      setSelectedBooking(null)
+  // Filter tab + search, used by BOTH the cards (phones) and the grid (desktop)
+  const visibleBookings = useMemo(() => {
+    const q = searchText.trim().toLowerCase()
+    return bookings.filter((b) => {
+      if (activeFilter !== 'ALL' && b.status !== activeFilter) return false
+      if (!q) return true
+      return [b.referenceToken, b.customerName, b.equipment?.name, b.siteLocation].some(
+        (value) => value?.toLowerCase().includes(q)
+      )
     })
-    .catch(() => alert('Could not delete the booking. Please try again.'))
-}
-
-  const filteredBookings = useMemo(() => {
-    if (activeFilter === 'ALL') return bookings
-    return bookings.filter((b) => b.status === activeFilter)
-  }, [bookings, activeFilter])
+  }, [bookings, activeFilter, searchText])
 
   const counts = useMemo(() => {
     return {
@@ -97,44 +135,55 @@ function deleteBooking() {
   const columnDefs = useMemo(
     () => [
       { field: 'referenceToken', headerName: 'REF', width: 140 },
-      { field: 'customerName', headerName: 'CUSTOMER', flex: 1 },
+      { field: 'customerName', headerName: 'CUSTOMER', flex: 1, minWidth: 140 },
       {
         field: 'equipment.name',
         headerName: 'EQUIPMENT',
         flex: 1,
+        minWidth: 140,
         valueGetter: (params) => params.data.equipment?.name,
       },
-      { field: 'siteLocation', headerName: 'LOCATION', flex: 1 },
+      { field: 'siteLocation', headerName: 'LOCATION', flex: 1, minWidth: 130 },
       { field: 'startDate', headerName: 'START', width: 120 },
       { field: 'endDate', headerName: 'END', width: 120 },
-      { field: 'status', headerName: 'STATUS', width: 130 },
       {
-  headerName: '',
-  width: 120,
-  sortable: false,
-  filter: false,
-  cellRenderer: (params) => (
-    <button
-      onClick={() => setSelectedBooking(params.data)}
-      className="border border-slate-900 text-slate-900 text-xs font-bold px-3 py-1 hover:bg-slate-900 hover:text-white transition-colors"
-    >
-      MANAGE
-    </button>
-  ),
-},
+        field: 'status',
+        headerName: 'STATUS',
+        width: 140,
+        cellRenderer: (params) => <StatusBadge status={params.value} />,
+      },
+      {
+        headerName: '',
+        width: 120,
+        sortable: false,
+        filter: false,
+        cellRenderer: (params) => (
+          <button
+            onClick={() => setSelectedBooking(params.data)}
+            className="border border-slate-900 text-slate-900 text-xs font-bold px-3 py-1 rounded hover:bg-slate-900 hover:text-white transition-colors"
+          >
+            MANAGE
+          </button>
+        ),
+      },
     ],
     []
   )
 
-  const filterTabs = ['ALL', 'NEW', 'CONFIRMED', 'IN_USE', 'RETURNED', 'CANCELLED']
+  const summaryCards = [
+    { label: 'NEW REQUESTS', value: counts.NEW, border: 'border-amber-500' },
+    { label: 'ACTIVE HIRES', value: counts.IN_USE, border: 'border-slate-900' },
+    { label: 'CONFIRMED', value: counts.CONFIRMED, border: 'border-green-600' },
+    { label: 'TOTAL', value: counts.ALL, border: 'border-slate-400' },
+  ]
 
   return (
-    <main className="bg-slate-50 min-h-screen px-8 mt-9 py-12">
+    <main className="bg-slate-50 min-h-screen px-4 sm:px-8 pt-28 pb-12">
       <div className="max-w-7xl mx-auto">
         <p className="text-amber-600 text-xs font-bold tracking-widest mb-1">
           BOOKINGS
         </p>
-        <h1 className="text-3xl font-black text-slate-900 mb-8">
+        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 mb-6 sm:mb-8">
           HIRE REQUESTS
         </h1>
 
@@ -144,78 +193,118 @@ function deleteBooking() {
         {!loading && !error && (
           <>
             {/* Summary cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-              <div className="bg-white border-l-4 border-amber-500 p-4 rounded shadow-m">
-                <p className="text-xs text-slate-500 font-bold tracking-widest">
-                  NEW REQUESTS
-                </p>
-                <p className="text-3xl font-black text-slate-900">
-                  {counts.NEW}
-                </p>
-              </div>
-              <div className="bg-white border-l-4 border-slate-900 p-4 rounded shadow-sm">
-                <p className="text-xs text-slate-500 font-bold tracking-widest">
-                  ACTIVE HIRES
-                </p>
-                <p className="text-3xl font-black text-slate-900">
-                  {counts.IN_USE}
-                </p>
-              </div>
-              <div className="bg-white border-l-4 border-green-600 p-4 rounded shadow-sm">
-                <p className="text-xs text-slate-500 font-bold tracking-widest">
-                  CONFIRMED
-                </p>
-                <p className="text-3xl font-black text-slate-900">
-                  {counts.CONFIRMED}
-                </p>
-              </div>
-              <div className="bg-white border-l-4 border-slate-400 p-4 rounded shadow-sm">
-                <p className="text-xs text-slate-500 font-bold tracking-widest">
-                  TOTAL
-                </p>
-                <p className="text-3xl font-black text-slate-900">
-                  {counts.ALL}
-                </p>
-              </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+              {summaryCards.map((card) => (
+                <div
+                  key={card.label}
+                  className={`bg-white border-l-4 ${card.border} p-3 sm:p-4 rounded-lg shadow-sm`}
+                >
+                  <p className="text-[10px] sm:text-xs text-slate-500 font-bold tracking-widest">
+                    {card.label}
+                  </p>
+                  <p className="text-2xl sm:text-3xl font-black text-slate-900">
+                    {card.value}
+                  </p>
+                </div>
+              ))}
             </div>
 
-            {/* Filter tabs + search */}
-            <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-
-               <input
+            {/* Search + filter tabs */}
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+              <input
                 type="text"
                 placeholder="Search ref / customer / machine"
-                value={quickFilterText}
-                onChange={(e) => setQuickFilterText(e.target.value)}
-                className="border border-slate-800 rounded px-4 py-2 text-sm w-full md:w-1/3 focus:outline-none focus:ring-2 focus:ring-slate-800 "
+                value={searchText}
+                onChange={(e) => {
+                  setSearchText(e.target.value)
+                  setCardCount(10)
+                }}
+                className="w-full md:w-1/3 bg-white border border-slate-300 rounded-lg px-4 py-3 text-base md:text-sm focus:outline-none focus:ring-2 focus:ring-slate-800"
               />
 
-
-              <div className="flex flex-wrap gap-2">
-                {filterTabs.map((tab) => (
+              {/* One scrollable row on phones, wraps on bigger screens */}
+              <div className="flex gap-2 overflow-x-auto md:overflow-visible md:flex-wrap -mx-4 px-4 md:mx-0 md:px-0 pb-1">
+                {FILTER_TABS.map((tab) => (
                   <button
                     key={tab}
-                    onClick={() => setActiveFilter(tab)}
-                    className={`px-4 py-2 text-sm font-bold rounded ${
+                    onClick={() => {
+                      setActiveFilter(tab)
+                      setCardCount(10)
+                    }}
+                    className={`shrink-0 whitespace-nowrap px-4 py-2 text-xs sm:text-sm font-bold rounded-full transition-colors ${
                       activeFilter === tab
                         ? 'bg-slate-900 text-white'
-                        : 'bg-white text-slate-600 border border-slate-500'
+                        : 'bg-white text-slate-600 border border-slate-300 hover:border-slate-500'
                     }`}
                   >
-                    {tab} {tab !== 'ALL' ? `(${counts[tab]})` : `(${counts.ALL})`}
+                    {tab.replace('_', ' ')} ({counts[tab]})
                   </button>
                 ))}
               </div>
-
-             
             </div>
 
-            {/* The grid */}
-            <div className="ag-theme-quartz   " style={{ height: 500, width: '100%' }}>
+            {/* PHONE: booking cards */}
+            <div className="md:hidden space-y-3">
+              {visibleBookings.length === 0 && (
+                <p className="text-center text-slate-500 py-10">
+                  No bookings found.
+                </p>
+              )}
+
+              {visibleBookings.slice(0, cardCount).map((b) => (
+                <div
+                  key={b.id}
+                  className="bg-white rounded-xl border border-slate-200 shadow-sm p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-bold tracking-widest text-amber-600">
+                        {b.referenceToken}
+                      </p>
+                      <p className="font-black text-slate-900 truncate">
+                        {b.customerName}
+                      </p>
+                    </div>
+                    <StatusBadge status={b.status} />
+                  </div>
+
+                  <div className="mt-3 space-y-1 text-sm text-slate-600">
+                    <p className="font-semibold text-slate-800">
+                      {b.equipment?.name}
+                    </p>
+                    <p>{b.siteLocation}</p>
+                    <p>
+                      {b.startDate} → {b.endDate}
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => setSelectedBooking(b)}
+                    className="mt-4 w-full bg-slate-900 text-white font-bold text-sm py-3 rounded-lg hover:bg-amber-500 hover:text-slate-900 transition-colors"
+                  >
+                    MANAGE
+                  </button>
+                </div>
+              ))}
+
+              {visibleBookings.length > cardCount && (
+                <button
+                  onClick={() => setCardCount(cardCount + 10)}
+                  className="w-full border border-slate-300 bg-white text-slate-700 font-bold text-sm py-3 rounded-lg"
+                >
+                  SHOW MORE ({visibleBookings.length - cardCount} left)
+                </button>
+              )}
+            </div>
+
+            {/* DESKTOP: the grid */}
+            <div
+              className="hidden md:block ag-theme-quartz rounded-xl overflow-hidden shadow-sm"
+              style={{ height: 560, width: '100%' }}
+            >
               <AgGridReact
-                rowData={filteredBookings}
+                rowData={visibleBookings}
                 columnDefs={columnDefs}
-                quickFilterText={quickFilterText}
                 pagination={true}
                 paginationPageSize={10}
               />
@@ -223,72 +312,103 @@ function deleteBooking() {
           </>
         )}
 
+        {/* MANAGE modal: slides up from the bottom on phones, centered on bigger screens */}
         {selectedBooking && (
-  <div
-    className="fixed inset-0 bg-black/60 flex items-center justify-center px-4 z-50"
-    onClick={() => setSelectedBooking(null)}
-  >
-    <div
-      className="bg-white rounded-lg shadow-xl w-full max-w-lg overflow-hidden"
-      onClick={(e) => e.stopPropagation()}
-    >
-      <div className="bg-slate-900 text-white px-6 py-4 flex justify-between items-center">
-        <div>
-          <p className="text-amber-500 text-xs font-bold tracking-widest">
-            {selectedBooking.referenceToken}
-          </p>
-          <h2 className="text-xl font-black">{selectedBooking.customerName}</h2>
-        </div>
-        <button
-          onClick={() => setSelectedBooking(null)}
-          className="text-2xl leading-none"
-        >
-          ×
-        </button>
-      </div>
-
-      <div className="p-6 space-y-3 text-sm text-slate-700">
-        <p><span className="font-bold">Phone:</span> {selectedBooking.customerPhone}</p>
-        <p><span className="font-bold">Email:</span> {selectedBooking.customerEmail}</p>
-        <p><span className="font-bold">Equipment:</span> {selectedBooking.equipment?.name}</p>
-        <p><span className="font-bold">Site:</span> {selectedBooking.siteLocation}</p>
-        <p>
-          <span className="font-bold">Dates:</span> {selectedBooking.startDate} → {selectedBooking.endDate}
-        </p>
-        <p><span className="font-bold">Current status:</span> {selectedBooking.status}</p>
-      </div>
-
-      <div className="px-6 pb-6">
-        <p className="text-xs font-bold text-slate-500 tracking-widest mb-2">
-          CHANGE STATUS
-        </p>
-        <div className="flex flex-wrap gap-2 mb-6">
-          {['NEW', 'CONFIRMED', 'IN_USE', 'RETURNED', 'CANCELLED'].map((s) => (
-            <button
-              key={s}
-              onClick={() => updateStatus(s)}
-              disabled={selectedBooking.status === s}
-              className={`px-3 py-2 text-xs font-bold rounded ${
-                selectedBooking.status === s
-                  ? 'bg-slate-900 text-white'
-                  : 'bg-slate-100 text-slate-700 hover:bg-amber-500'
-              }`}
+          <div
+            className="fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center sm:px-4 z-[60]"
+            onClick={() => setSelectedBooking(null)}
+          >
+            <div
+              className="bg-white w-full sm:max-w-lg rounded-t-2xl sm:rounded-lg shadow-xl overflow-hidden max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
             >
-              {s}
-            </button>
-          ))}
-        </div>
+              <div className="bg-slate-900 text-white px-5 sm:px-6 py-4 flex justify-between items-center gap-3 sticky top-0">
+                <div className="min-w-0">
+                  <p className="text-amber-500 text-xs font-bold tracking-widest">
+                    {selectedBooking.referenceToken}
+                  </p>
+                  <h2 className="text-lg sm:text-xl font-black truncate">
+                    {selectedBooking.customerName}
+                  </h2>
+                </div>
+                <button
+                  onClick={() => setSelectedBooking(null)}
+                  className="text-3xl leading-none px-2"
+                  aria-label="Close"
+                >
+                  ×
+                </button>
+              </div>
 
-        <button
-          onClick={deleteBooking}
-          className="w-full border border-red-600 text-red-600 font-bold py-2 rounded hover:bg-red-600 hover:text-white transition-colors"
-        >
-          DELETE BOOKING
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+              <div className="p-5 sm:p-6 space-y-3 text-sm text-slate-700">
+                <p>
+                  <span className="font-bold">Phone:</span>{' '}
+                  <a
+                    href={`tel:${selectedBooking.customerPhone}`}
+                    className="text-blue-700 underline"
+                  >
+                    {selectedBooking.customerPhone}
+                  </a>
+                </p>
+                <p className="break-all">
+                  <span className="font-bold">Email:</span>{' '}
+                  <a
+                    href={`mailto:${selectedBooking.customerEmail}`}
+                    className="text-blue-700 underline"
+                  >
+                    {selectedBooking.customerEmail}
+                  </a>
+                </p>
+                <p>
+                  <span className="font-bold">Equipment:</span>{' '}
+                  {selectedBooking.equipment?.name}
+                </p>
+                <p>
+                  <span className="font-bold">Site:</span>{' '}
+                  {selectedBooking.siteLocation}
+                </p>
+                <p>
+                  <span className="font-bold">Dates:</span>{' '}
+                  {selectedBooking.startDate} → {selectedBooking.endDate}
+                </p>
+                <p className="flex items-center gap-2">
+                  <span className="font-bold">Current status:</span>
+                  <StatusBadge status={selectedBooking.status} />
+                </p>
+              </div>
+
+              <div className="px-5 sm:px-6 pb-6">
+                <p className="text-xs font-bold text-slate-500 tracking-widest mb-2">
+                  CHANGE STATUS
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-6">
+                  {STATUSES.map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => updateStatus(s)}
+                      disabled={busy || selectedBooking.status === s}
+                      className={`px-3 py-3 text-xs font-bold rounded-lg transition-colors disabled:cursor-not-allowed ${
+                        selectedBooking.status === s
+                          ? 'bg-slate-900 text-white'
+                          : 'bg-slate-100 text-slate-700 hover:bg-amber-500 disabled:opacity-60'
+                      }`}
+                    >
+                      {s.replace('_', ' ')}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  onClick={deleteBooking}
+                  disabled={busy}
+                  className="w-full border border-red-600 text-red-600 font-bold py-3 rounded-lg hover:bg-red-600 hover:text-white transition-colors disabled:opacity-60"
+                >
+                  DELETE BOOKING
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </main>
   )

@@ -35,16 +35,14 @@ function AdminLoginPage() {
   }
 
   return (
-    <main className="bg-slate-900 min-h-screen flex items-center justify-center px-8 bg-slate-950 relative"
-      style={{
-        backgroundImage:
-          'linear-gradient(rgba(255,255,255,0.01) 1px, transparent 0.2px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 0.2px)',
-        backgroundSize: '32px 32px',
-      }}
+    <main className="bg-slate-900 min-h-screen  overflow-hidden flex items-center justify-center px-8 bg-slate-950 relative"
+      
     
     >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-        <div className="bg-amber-500 px-8 py-6">
+       <div className="absolute inset-0  pointer-events-none bg-[url('/hero-excavator.jpg')] bg-cover bg-center opacity-30"></div>
+      
+      <div className=" rounded-2xl shadow-2xl relative   sm:max-w-lg w-full max-w-md overflow-hidden">
+        <div className="bg-amber-500 px-8 py-8">
           <h1 className="text-2xl font-black text-slate-900">ADMIN LOGIN</h1>
           <p className="text-slate-800 font-bold text-sm">LJ Plant Hire management</p>
         </div>
@@ -57,7 +55,7 @@ function AdminLoginPage() {
           )}
 
           <div>
-            <label className="block text-xs font-bold text-slate-800 tracking-widest mb-2">
+            <label className="block text-xs font-bold text-slate-200 tracking-widest mb-2">
               USERNAME
             </label>
             <input
@@ -71,7 +69,7 @@ function AdminLoginPage() {
           </div>
 
           <div >
-            <label className="block text-xs font-bold text-slate-800 tracking-widest mb-2">
+            <label className="block text-xs font-bold text-slate-200 tracking-widest mb-2">
     PASSWORD
   </label>
   <div className="relative">
@@ -101,6 +99,7 @@ function AdminLoginPage() {
           </button>
         </form>
       </div>
+      
     </main>
   )
 }
