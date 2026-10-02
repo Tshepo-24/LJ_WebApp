@@ -43,14 +43,27 @@ export default HeroSection*/}
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 
-// Fades and rises into place. Plays once, when the page loads.
-function Rise({ show, delay = 0, as: Tag = "div", className = "", children }) {
+// Animation component
+function Rise({
+  show,
+  delay = 0,
+  as: Tag = "div",
+  className = "",
+  children,
+}) {
   return (
     <Tag
       style={{ transitionDelay: `${delay}ms` }}
-      className={`transition-all duration-700 ease-out motion-reduce:translate-y-0 motion-reduce:opacity-100 motion-reduce:transition-none ${
-        show ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
-      } ${className}`}
+      className={`transition-all duration-700 ease-out
+        motion-reduce:translate-y-0
+        motion-reduce:opacity-100
+        motion-reduce:transition-none
+        ${
+          show
+            ? "translate-y-0 opacity-100"
+            : "translate-y-6 opacity-0"
+        }
+        ${className}`}
     >
       {children}
     </Tag>
@@ -58,9 +71,18 @@ function Rise({ show, delay = 0, as: Tag = "div", className = "", children }) {
 }
 
 const facts = [
-  { label: "BASED IN", value: "Tzaneen, Limpopo" },
-  { label: "HIRE RATES", value: "By the hour or day" },
-  { label: "DELIVERY", value: "Across South Africa" },
+  {
+    label: "BASED IN",
+    value: "Tzaneen, Limpopo",
+  },
+  {
+    label: "HIRE RATES",
+    value: "By the hour or day",
+  },
+  {
+    label: "DELIVERY",
+    value: "Across South Africa",
+  },
 ]
 
 function HeroSection() {
@@ -68,93 +90,394 @@ function HeroSection() {
 
   useEffect(() => {
     const id = setTimeout(() => setLoaded(true), 60)
+
     return () => clearTimeout(id)
   }, [])
 
   return (
-    <section className="relative flex min-h-screen items-center overflow-hidden bg-slate-900 px-6 pb-16 pt-28 sm:px-8 md:px-16 md:pb-32 md:pt-24">
-      {/* Photo: slowly settles into place when the page loads */}
+    <section
+      className="
+        relative
+        flex
+        min-h-screen
+        flex-col
+        overflow-hidden
+        bg-slate-900
+        px-5
+        pt-28
+        pb-6
+
+        sm:px-8
+        sm:pt-32
+
+        md:px-16
+        md:pt-24
+        md:pb-0
+      "
+    >
+
+      {/* BACKGROUND IMAGE */}
       <div
-        className={`absolute inset-0 bg-[url('/hero-excavator.jpg')] bg-cover bg-center transition-transform duration-[2500ms] ease-out motion-reduce:transition-none ${
-          loaded ? "scale-100" : "scale-110"
-        }`}
+        className={`
+          absolute inset-0
+          bg-[url('/hero-excavator.jpg')]
+          bg-cover
+          bg-center
+          transition-transform
+          duration-[2500ms]
+          ease-out
+          motion-reduce:transition-none
+          ${
+            loaded
+              ? "scale-100"
+              : "scale-110"
+          }
+        `}
       ></div>
 
-      {/* Dark overlays so the text is easy to read */}
-      <div className="absolute inset-0 bg-slate-950/50 md:bg-transparent"></div>
-      <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-900/60 to-slate-900/10"></div>
-      <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-slate-900 to-transparent"></div>
+{/* PREMIUM DARK OVERLAY */}
+<div className="absolute inset-0 bg-slate-950/35"></div>
 
-      {/* Content */}
-      <div className="relative z-10 mx-auto w-full max-w-6xl">
+{/* Stronger darkness behind the text */}
+<div
+  className="
+    absolute
+    inset-0
+    bg-gradient-to-r
+    from-slate-950/95
+    via-slate-950/70
+    via-45%
+    to-slate-950/10
+  "
+></div>
+
+{/* Extra mobile readability */}
+<div
+  className="
+    absolute
+    inset-0
+    bg-gradient-to-b
+    from-slate-950/30
+    via-transparent
+    to-slate-950/75
+
+    md:from-transparent
+    md:to-slate-950/70
+  "
+></div>
+
+{/* Soft shadow directly behind the hero content */}
+<div
+  className="
+    absolute
+    left-0
+    top-0
+    bottom-0
+    w-full
+    md:w-[65%]
+    bg-gradient-to-r
+    from-slate-950/40
+    to-transparent
+    blur-2xl
+  "
+></div>
+
+      {/* BOTTOM DARK GRADIENT */}
+      <div
+        className="
+          absolute
+          inset-x-0
+          bottom-0
+          h-48
+          bg-gradient-to-t
+          from-slate-950
+          to-transparent
+        "
+      ></div>
+
+
+      {/* MAIN CONTENT */}
+      <div
+        className="
+          relative
+          z-10
+          mx-auto
+          flex
+          w-full
+          max-w-6xl
+          flex-1
+          flex-col
+          justify-center
+
+          md:justify-center
+        "
+      >
+
         <div className="max-w-3xl">
+
+          {/* SMALL TITLE */}
           <Rise show={loaded} delay={100}>
-            <p className="mb-6 flex items-center gap-3 text-xs font-bold tracking-widest text-amber-500">
-              <span className="h-0.5 w-8 bg-amber-500"></span>
+            <p
+              className="
+                mb-5
+                flex
+                items-center
+                gap-3
+                text-[10px]
+                font-bold
+                tracking-[0.18em]
+                text-amber-500
+
+                sm:text-xs
+              "
+            >
+              <span className="h-0.5 w-7 bg-amber-500 sm:w-8"></span>
+
               RELIABLE EQUIPMENT FOR HIRE
             </p>
           </Rise>
 
+
+          {/* MAIN HEADING */}
           <h1
-            className="mb-6 text-4xl font-black leading-[1.05] text-white sm:text-5xl md:text-6xl lg:text-7xl"
-            style={{ fontFamily: "'Barlow', sans-serif" }}
+            className="
+              mb-5
+              text-4xl
+              font-black
+              leading-[1.02]
+              text-white
+
+              sm:text-5xl
+
+              md:text-6xl
+
+              lg:text-7xl
+            "
+            style={{
+              fontFamily: "'Barlow', sans-serif",
+            }}
           >
-            <Rise show={loaded} delay={250} as="span" className="block">
-              HEAVY <span className="text-amber-500">POWER.</span>
+
+            <Rise
+              show={loaded}
+              delay={250}
+              as="span"
+              className="block"
+            >
+              HEAVY{" "}
+              <span className="text-amber-500">
+                POWER.
+              </span>
             </Rise>
-            <Rise show={loaded} delay={400} as="span" className="block">
-              PRESTIGE <span className="text-amber-500">SERVICE.</span>
+
+            <Rise
+              show={loaded}
+              delay={400}
+              as="span"
+              className="block"
+            >
+              PRESTIGE{" "}
+              <span className="text-amber-500">
+                SERVICE.
+              </span>
             </Rise>
+
           </h1>
 
+
+          {/* DESCRIPTION */}
           <Rise show={loaded} delay={550}>
-            <p className="mb-8 max-w-xl text-base font-light leading-relaxed text-slate-200 sm:text-lg">
-              Reliable construction and mining equipment hire in Tzaneen.
-              Premium machinery, maintained to the highest industrial
+
+            <p
+              className="
+                mb-6
+                max-w-xl
+                text-sm
+                font-light
+                leading-relaxed
+                text-slate-200
+
+                sm:mb-8
+                sm:text-lg
+              "
+            >
+              Reliable construction and mining equipment
+              hire in Tzaneen. Premium machinery,
+              maintained to the highest industrial
               standards, delivered across South Africa.
             </p>
+
           </Rise>
 
+
+          {/* BUTTONS */}
           <Rise show={loaded} delay={700}>
-            <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
+
+            <div
+              className="
+                flex
+                flex-col
+                gap-3
+
+                sm:flex-row
+                sm:gap-4
+              "
+            >
+
               <Link
                 to="/equipment"
-                className="rounded-lg bg-amber-500 px-8 py-4 text-center font-bold text-slate-900 transition-colors hover:bg-amber-400"
+                className="
+                  w-full
+                  rounded-lg
+                  bg-amber-500
+                  px-6
+                  py-3.5
+                  text-center
+                  text-sm
+                  font-bold
+                  text-slate-900
+                  transition-colors
+                  hover:bg-amber-400
+
+                  sm:w-auto
+                  sm:px-8
+                  sm:py-4
+                  sm:text-base
+                "
               >
                 BROWSE THE FLEET
               </Link>
+
+
               <Link
                 to="/contact"
-                className="rounded-lg border border-white/70 px-8 py-4 text-center font-bold text-white backdrop-blur-sm transition-colors hover:bg-white hover:text-slate-900"
+                className="
+                  w-full
+                  rounded-lg
+                  border
+                  border-white/70
+                  px-6
+                  py-3.5
+                  text-center
+                  text-sm
+                  font-bold
+                  text-white
+                  backdrop-blur-sm
+                  transition-colors
+                  hover:bg-white
+                  hover:text-slate-900
+
+                  sm:w-auto
+                  sm:px-8
+                  sm:py-4
+                  sm:text-base
+                "
               >
                 BOOK A MACHINE
               </Link>
+
             </div>
+
           </Rise>
+
         </div>
+
       </div>
 
-      {/* Facts strip along the bottom (hidden on phones to keep it short) */}
+
+      {/* FACTS */}
       <div
-        style={{ transitionDelay: "900ms" }}
-        className={`absolute inset-x-0 bottom-0 z-10 hidden border-t border-white/10 bg-slate-950/50 px-16 backdrop-blur-sm transition-opacity duration-700 motion-reduce:opacity-100 motion-reduce:transition-none md:block ${
-          loaded ? "opacity-100" : "opacity-0"
-        }`}
+        style={{
+          transitionDelay: "900ms",
+        }}
+        className={`
+          relative
+          z-10
+          mt-8
+          w-full
+          border-t
+          border-white/10
+          bg-slate-950/50
+          backdrop-blur-sm
+          transition-opacity
+          duration-700
+
+          md:mx-auto
+          md:mt-8
+          md:max-w-6xl
+
+          ${
+            loaded
+              ? "opacity-100"
+              : "opacity-0"
+          }
+        `}
       >
-        <div className="mx-auto grid max-w-6xl grid-cols-3 py-5">
+
+        <div
+          className="
+            grid
+            grid-cols-3
+            divide-x
+            divide-white/10
+            py-4
+
+            sm:py-5
+          "
+        >
+
           {facts.map((fact) => (
+
             <div
               key={fact.label}
-              className="border-l border-white/10 pl-6 first:border-l-0 first:pl-0"
+              className="
+                px-2
+
+                sm:px-4
+
+                md:pl-6
+                md:first:pl-0
+              "
             >
-              <p className="mb-1 text-xs font-bold tracking-widest text-slate-400">
+
+              <p
+                className="
+                  mb-1
+                  text-[8px]
+                  font-bold
+                  tracking-wider
+                  text-slate-400
+
+                  sm:text-[10px]
+                  md:text-xs
+                "
+              >
                 {fact.label}
               </p>
-              <p className="font-bold text-white">{fact.value}</p>
+
+              <p
+                className="
+                  text-[10px]
+                  font-bold
+                  leading-tight
+                  text-white
+
+                  sm:text-xs
+
+                  md:text-base
+                "
+              >
+                {fact.value}
+              </p>
+
             </div>
+
           ))}
+
         </div>
+
       </div>
+
     </section>
   )
 }
