@@ -8,12 +8,15 @@ import Footer from './components/Footer'
 import AdminLoginPage from './pages/AdminLoginPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import AdminDashboardPage from './pages/AdminDashboardPage'
+import ScrollToTop from "./components/ScrollToTop"
+import WhatsAppButton from "./components/WhatsAppButton"
 function App (){
 
 
   return(
 
     <>
+    <ScrollToTop />
     <Navbar />
     <Routes>
   <Route path="/about" element={<AboutPage />} />
@@ -31,6 +34,7 @@ function App (){
 />
     </Routes>
      <Footer />
+     <WhatsAppButton />
     </>
   )
 }

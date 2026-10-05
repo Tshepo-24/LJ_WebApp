@@ -64,73 +64,93 @@ const steps = [
     text: "Tell us what you need, where your site is and for how long. The form only takes a few minutes.",
     to: "/contact",
     linkText: "Fill in the request form",
+    ready: [
+      "Your name or company name",
+      "A phone number we can reach you on",
+      "Your email address",
+      "Your site location (town or farm name)",
+      "Your start and end dates",
+    ],
   },
   {
     number: "03",
     title: "WE CONFIRM & DELIVER",
     text: "Our team confirms availability within the hour and arranges delivery to your site.",
+    note: "Then wait to hear from us.",
   },
 ]
 
-const readyList = [
-  "Your name or company name",
-  "A phone number we can reach you on",
-  "Your email address",
-  "Your site location (town or farm name)",
-  "Your start and end dates",
-  "Then wait to hear from us"
-]
+// Each step starts a little lower than the one before it (desktop only)
+const offsets = ["", "md:mt-10", "md:mt-20"]
 
-function Step({ step, index, isLast }) {
+function Step({ step, index }) {
   const [ref, inView] = useInView(0.2)
-  const delay = index * 120
+  const delay = index * 150
 
   return (
-    <div
-      ref={ref}
-      className="group relative flex items-start gap-5 md:flex-col md:items-center md:gap-0 md:text-center"
-    >
-      {/* PHONE: line running down to the next circle */}
-      {!isLast && (
-        <span
-          style={{ transitionDelay: `${delay + 300}ms` }}
-          className={`absolute -bottom-10 left-8 top-16 w-0.5 origin-top -translate-x-1/2 bg-amber-500 transition-transform duration-700 ease-out motion-reduce:scale-y-100 motion-reduce:transition-none md:hidden ${
-            inView ? "scale-y-100" : "scale-y-0"
+    <div ref={ref} className={`pb-10 md:pb-0 ${offsets[index] || ""}`}>
+      {/* Amber rule that draws across once */}
+      <div className="h-0.5 bg-white/15">
+        <div
+          style={{ transitionDelay: `${delay}ms` }}
+          className={`h-full origin-left bg-amber-500 transition-transform duration-1000 ease-out motion-reduce:scale-x-100 motion-reduce:transition-none ${
+            inView ? "scale-x-100" : "scale-x-0"
           }`}
-        ></span>
-      )}
-
-      {/* Circle pops in */}
-      <div
-        style={{ transitionDelay: `${delay}ms` }}
-        className={`relative z-10 flex h-16 w-16 shrink-0 items-center justify-center rounded-full border-2 border-amber-500 bg-slate-900 text-lg font-black text-amber-500 transition-all duration-500 ease-out group-hover:bg-amber-500 group-hover:text-slate-900 motion-reduce:scale-100 motion-reduce:opacity-100 motion-reduce:transition-none md:mb-5 ${
-          inView ? "scale-100 opacity-100" : "scale-75 opacity-0"
-        }`}
-      >
-        {step.number}
+        ></div>
       </div>
 
-      {/* Text fades in a moment later */}
       <div
-        style={{ transitionDelay: `${delay + 200}ms` }}
-        className={`min-w-0 transition-all duration-700 ease-out motion-reduce:translate-x-0 motion-reduce:translate-y-0 motion-reduce:opacity-100 motion-reduce:transition-none ${
-          inView
-            ? "translate-x-0 translate-y-0 opacity-100"
-            : "translate-x-4 opacity-0 md:translate-x-0 md:translate-y-4"
+        style={{ transitionDelay: `${delay + 300}ms` }}
+        className={`pt-6 transition-all duration-700 ease-out motion-reduce:translate-y-0 motion-reduce:opacity-100 motion-reduce:transition-none ${
+          inView ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
         }`}
       >
-        <h3 className="mb-2 text-lg font-bold tracking-wide text-white">
+        <span
+          className="block text-6xl font-bold leading-none text-amber-500 sm:text-7xl"
+          style={{ fontFamily: "'Barlow', sans-serif" }}
+        >
+          {step.number}
+        </span>
+
+        <h3
+          className="mt-4 text-2xl font-bold uppercase leading-tight tracking-wide text-white sm:text-3xl"
+          style={{ fontFamily: "'Barlow', sans-serif" }}
+        >
           {step.title}
         </h3>
-        <p className="max-w-xs text-sm leading-relaxed text-slate-400 md:mx-auto">
+
+        <p className="mt-3 max-w-sm leading-relaxed text-slate-400">
           {step.text}
         </p>
+
+        {step.ready && (
+          <div className="mt-5 border-t border-white/15 pt-4">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-slate-400">
+              Have these ready
+            </p>
+            <ul className="space-y-1.5 text-sm text-slate-200">
+              {step.ready.map((item) => (
+                <li key={item} className="flex items-start gap-3">
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 bg-amber-500"></span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {step.note && (
+          <p className="mt-5 border-l-4 border-amber-500 pl-3 text-sm font-semibold text-slate-200">
+            {step.note}
+          </p>
+        )}
+
         {step.to && (
           <Link
             to={step.to}
-            className="mt-3 inline-block text-sm font-bold text-amber-500 transition-colors hover:text-amber-400"
+            className="mt-5 inline-block text-sm font-bold text-white underline decoration-amber-500 decoration-2 underline-offset-4 transition-colors hover:text-amber-500"
           >
-            {step.linkText} →
+            {step.linkText}
           </Link>
         )}
       </div>
@@ -139,69 +159,51 @@ function Step({ step, index, isLast }) {
 }
 
 function RentalProcess() {
-  const [gridRef, gridInView] = useInView(0.25)
-
   return (
-    <section className="bg-slate-900 px-5 py-16 sm:px-8 md:px-16 md:py-24">
+    <section className="bg-slate-900 px-5 py-16 text-white sm:px-8 md:px-16 md:py-24">
       <div className="mx-auto max-w-6xl">
         <Reveal>
-          <p className="mb-3 text-xs font-bold tracking-widest text-amber-500">
-            HOW IT WORKS
+          <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-amber-500">
+            How it works
           </p>
           <h2
-            className="mb-4 max-w-3xl text-3xl font-black text-white sm:text-4xl md:text-5xl"
+            className="max-w-3xl text-4xl font-bold uppercase leading-[1.02] tracking-wide sm:text-5xl lg:text-6xl"
             style={{ fontFamily: "'Barlow', sans-serif" }}
           >
-            HIRE A MACHINE IN{" "}
-            <span className="text-amber-500">3 SIMPLE STEPS</span>
+            Hire a machine in 3 simple steps
           </h2>
-          <p className="mb-12 max-w-2xl text-slate-400 md:mb-16">
+          <p className="mt-5 max-w-xl text-lg leading-relaxed text-slate-400">
             Here is what happens, from your first click to a machine on your
             site.
           </p>
         </Reveal>
 
-        <div
-          ref={gridRef}
-          className="relative grid grid-cols-1 gap-10 md:grid-cols-3 md:gap-8"
-        >
-          {/* DESKTOP: line that draws across once */}
-          <div className="absolute left-[16.67%] right-[16.67%] top-8 hidden h-0.5 -translate-y-1/2 bg-slate-700 md:block">
-            <div
-              style={{ transitionDelay: "300ms" }}
-              className={`h-full origin-left bg-amber-500 transition-transform duration-1000 ease-out motion-reduce:scale-x-100 motion-reduce:transition-none ${
-                gridInView ? "scale-x-100" : "scale-x-0"
-              }`}
-            ></div>
-          </div>
-
+        <div className="mt-10 grid gap-2 md:mt-16 md:grid-cols-3 md:items-start md:gap-10">
           {steps.map((step, index) => (
-            <Step
-              key={step.number}
-              step={step}
-              index={index}
-              isLast={index === steps.length - 1}
-            />
+            <Step key={step.number} step={step} index={index} />
           ))}
         </div>
 
-        <Reveal delay={100} className="mt-14 md:mt-16">
-          <div className="relative overflow-hidden rounded-xl border border-white/10 bg-white/5 p-6 pt-7 backdrop-blur-sm sm:p-8 sm:pt-9">
-            <span className="absolute left-0 top-0 h-1 w-12 bg-amber-500"></span>
-            <p className="mb-4 text-xs font-bold tracking-widest text-slate-400">
-              HAVE THESE READY BEFORE YOU START
+        {/* Closing line */}
+        <Reveal className="mt-12 md:mt-20">
+          <div className="flex flex-col gap-3 border-t border-white/15 pt-6 sm:flex-row sm:items-end sm:justify-between sm:gap-8">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+                Prefer to talk it through?
+              </p>
+              <a
+                href="tel:0729664090"
+                className="block text-4xl font-bold tracking-wide text-white transition-colors hover:text-amber-500 sm:text-5xl"
+                style={{ fontFamily: "'Barlow', sans-serif" }}
+              >
+                072 966 4090
+              </a>
+            </div>
+            <p className="max-w-xs text-sm text-slate-400">
+              Call and we will help you choose the right machine for the job.
             </p>
-            <ul className="grid gap-x-8 gap-y-3 text-slate-200 sm:grid-cols-2 md:grid-cols-3">
-              {readyList.map((item) => (
-                <li key={item} className="flex items-start gap-3">
-                  <span className="mt-2 h-2 w-2 shrink-0 bg-amber-500"></span>
-                  {item}
-                </li>
-              ))}
-            </ul>
           </div>
         </Reveal>
-
       </div>
     </section>
   )

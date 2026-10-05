@@ -1,7 +1,7 @@
 import { useState } from "react"
 import Reveal, { useInView } from "./Reveal"
 
-const AUTO_SECONDS = 4 // how long each reason stays open
+const AUTO_SECONDS = 6// how long each reason stays open
 
 const reasons = [
   {
