@@ -289,13 +289,7 @@ function Navbar() {
           </Link>
         </div>
 
-        {/* Phone and tablet: tap-to-call number */}
-        <a
-          href="tel:0729664090"
-          className="pl-2 text-sm font-bold tracking-wide text-white transition-colors hover:text-amber-500 lg:hidden"
-        >
-          072 966 4090
-        </a>
+      
 
         {/* Phone and tablet: menu button */}
         <button
